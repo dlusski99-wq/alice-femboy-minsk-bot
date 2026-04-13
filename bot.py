@@ -10,8 +10,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
     response = requests.post(
-        "https://api.deepseek.com/chat/completions",
-        headers={"Authorization": f"Bearer {DEEPSEEK_API_KEY}"},
+        "https://api.deepseek.com/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+            "Content-Type": "application/json"
+        },
         json={
             "model": "deepseek-chat",
             "messages": [
@@ -20,7 +23,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
     )
 
-    answer = response.json()["choices"][0]["message"]["content"]
+    data = response.json()
+
+    # Если DeepSeek вернул ошибку — не падаем
+    if "choices" not in data:
+        await update.message.reply_text("DeepSeek вернул ошибку:\n" + str(data))
+        return
+
+    answer = data["choices"][0]["message"]["content"]
     await update.message.reply_text(answer)
 
 
