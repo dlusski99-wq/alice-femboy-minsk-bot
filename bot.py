@@ -4,6 +4,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 # Это комментарий
 # Он ничего не делает
+# Он ничего не делает
 # Его можно вставить куда угодно
 
 
