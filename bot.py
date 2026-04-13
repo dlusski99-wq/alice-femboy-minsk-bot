@@ -7,7 +7,6 @@ from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTyp
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
 
-    # Читаем ключ DeepSeek внутри функции (безопасно для Railway)
     DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
     response = requests.post(
@@ -26,4 +25,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def main():
+    TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    await app.run_polling()
+
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
