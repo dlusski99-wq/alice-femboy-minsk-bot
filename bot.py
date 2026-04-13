@@ -11,6 +11,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
 
     DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+print("DEEPSEEK_API_KEY =", DEEPSEEK_API_KEY)
 
     response = requests.post(
         "https://api.deepseek.com/v1/chat/completions",
