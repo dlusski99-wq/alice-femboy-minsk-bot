@@ -2,6 +2,9 @@ import os
 import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
+# Это комментарий
+# Он ничего не делает
+# Его можно вставить куда угодно
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
