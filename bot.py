@@ -24,15 +24,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(answer)
 
 
-async def main():
+def main():
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    await app.run_polling()
+    app.run_polling()
 
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    main()
+
