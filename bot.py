@@ -1,9 +1,8 @@
 import os
-import asyncio
+import time
 import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
-from telegram.error import Conflict
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
@@ -31,7 +30,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data = response.json()
 
         if "choices" not in data:
-            await update.message.reply_text("DeepSeek вернул ошибку:\n" + str(data))
+            await update.message.reply_text("DeepSeek ошибка:\n" + str(data))
             return
 
         answer = data["choices"][0]["message"]["content"]
@@ -40,27 +39,23 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"❌ Ошибка: {str(e)}")
 
-
 def main():
+    # Небольшая задержка, чтобы Railway успел настроить всё
+    time.sleep(3)
+    
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
     
     if not TELEGRAM_TOKEN:
         print("❌ TELEGRAM_TOKEN не найден!")
         return
 
+    print("🚀 Бот запускается...")
+    
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    # Пытаемся запустить с обработкой конфликта
-    try:
-        print("🚀 Запуск бота...")
-        # drop_pending_updates=True игнорирует старые сообщения
-        app.run_polling(drop_pending_updates=True)
-    except Conflict:
-        print("⚠️ Конфликт: бот уже запущен. Перезапустите деплой в Railway.")
-    except Exception as e:
-        print(f"❌ Ошибка: {e}")
-
+    # drop_pending_updates=True решает проблему с конфликтами
+    app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
