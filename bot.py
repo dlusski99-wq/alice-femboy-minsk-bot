@@ -1,34 +1,31 @@
 import os
-import asyncio
 import requests
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# ДИАГНОСТИКА ПРИ ЗАПУСКЕ
-print("=" * 50)
-print("ДИАГНОСТИКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ:")
-print(f"TELEGRAM_TOKEN: {'✅ Есть' if os.getenv('TELEGRAM_TOKEN') else '❌ НЕТ'}")
-print(f"DEEPSEEK_API_KEY: {'✅ Есть' if os.getenv('DEEPSEEK_API_KEY') else '❌ НЕТ'}")
-if os.getenv('DEEPSEEK_API_KEY'):
-    key = os.getenv('DEEPSEEK_API_KEY')
-    print(f"Длина ключа: {len(key)} символов")
-    print(f"Начало ключа: {key[:15]}...")
-print("=" * 50)
+print("🚀 Бот запускается...")
+print(f"Проверка TELEGRAM_TOKEN: {'✅' if os.getenv('TELEGRAM_TOKEN') else '❌'}")
+print(f"Проверка DEEPSEEK_API_KEY: {'✅' if os.getenv('DEEPSEEK_API_KEY') else '❌'}")
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("👋 Привет! Я бот с DeepSeek. Просто напиши мне сообщение!")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
-
-    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
     
-    if not DEEPSEEK_API_KEY:
-        await update.message.reply_text("❌ API ключ DeepSeek не найден в переменных окружения!")
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    
+    if not api_key:
+        await update.message.reply_text("❌ Ошибка: API ключ DeepSeek не настроен")
         return
-
+    
+    await update.message.reply_text("🤔 Думаю...")
+    
     try:
         response = requests.post(
             "https://api.deepseek.com/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             },
             json={
@@ -37,45 +34,31 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             },
             timeout=30
         )
-
-        data = response.json()
-
-        if "choices" not in data:
-            await update.message.reply_text("DeepSeek ошибка:\n" + str(data))
-            return
-
-        answer = data["choices"][0]["message"]["content"]
-        await update.message.reply_text(answer)
         
+        result = response.json()
+        
+        if "choices" in result:
+            answer = result["choices"][0]["message"]["content"]
+            await update.message.reply_text(answer)
+        else:
+            await update.message.reply_text(f"Ошибка: {result}")
+            
     except Exception as e:
         await update.message.reply_text(f"❌ Ошибка: {str(e)}")
 
-async def main():
-    TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+def main():
+    token = os.getenv("TELEGRAM_TOKEN")
     
-    if not TELEGRAM_TOKEN:
-        print("❌ TELEGRAM_TOKEN не найден!")
+    if not token:
+        print("❌ Ошибка: TELEGRAM_TOKEN не найден!")
         return
-
-    print("🚀 Запуск бота...")
     
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app = Application.builder().token(token).build()
+    app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    # Ключевое решение: используем drop_pending_updates и читаем обновления вручную
-    await app.initialize()
-    await app.updater.start_polling(drop_pending_updates=True)
-    await app.start()
-    
-    print("✅ Бот успешно запущен и работает!")
-    
-    # Держим бота работающим
-    try:
-        while True:
-            await asyncio.sleep(1)
-    except KeyboardInterrupt:
-        print("Остановка бота...")
-        await app.stop()
+    print("✅ Бот успешно запущен!")
+    app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
